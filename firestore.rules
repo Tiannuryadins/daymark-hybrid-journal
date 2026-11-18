@@ -1,0 +1,17 @@
+rules_version = '2';
+
+// Daymark Firestore security rules.
+// Every document lives under the anonymous user's own subtree, and a user
+// can only read/write their own data. Paste these into the Firebase console
+// under Firestore Database > Rules (see SETUP.md).
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Deny everything else by default (no match = no access).
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

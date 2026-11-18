@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daymark — a private journal that thinks with you</title>
+    <meta
+      name="description"
+      content="Daymark is a private journal with hybrid AI: quick reflections run on-device with Gemini Nano in Chrome, and deeper weekly insights fall back to Gemini in the cloud — all through Firebase AI Logic."
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="header-inner">
+        <div>
+          <h1>Daymark</h1>
+          <p class="tagline">A private journal that thinks with you.</p>
+        </div>
+        <div class="status-pills">
+          <span id="firebase-status" class="pill pill-pending">Firebase: …</span>
+          <span id="device-status" class="pill pill-pending">On-device AI: …</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section id="setup-banner" class="banner banner-warn" hidden>
+        <h2>Setup needed — one free Firebase project</h2>
+        <p>
+          Daymark is not connected to Firebase yet. Create a free Firebase
+          project (Spark plan, no billing), enable AI Logic with the Gemini
+          Developer API, and paste the web config into
+          <code>src/config.ts</code>. Full steps:
+          <a href="https://github.com/Tiannuryadins/daymark-hybrid-journal/blob/main/SETUP.md">SETUP.md</a>.
+          Until then, saving and AI are disabled — nothing here is simulated.
+        </p>
+      </section>
+
+      <div class="columns">
+        <div class="col-main">
+          <section class="card">
+            <div class="card-head">
+              <h2>Today&rsquo;s entry</h2>
+              <span id="today-label" class="muted"></span>
+            </div>
+            <label class="sr-only" for="entry-text">Journal entry</label>
+            <textarea
+              id="entry-text"
+              rows="8"
+              placeholder="Write freely. What happened today, and how did it feel?"
+            ></textarea>
+            <div class="row between">
+              <span id="word-count" class="muted">0 words</span>
+              <span id="save-state" class="muted"></span>
+            </div>
+
+            <div class="row wrap">
+              <button id="save-btn" class="btn btn-secondary" type="button">
+                Save entry
+              </button>
+              <button id="reflect-btn" class="btn btn-primary" type="button">
+                Reflect privately
+              </button>
+              <label class="mode-label" for="reflect-mode">
+                Inference
+                <select id="reflect-mode">
+                  <option value="prefer_on_device" selected>
+                    Balanced — prefer on-device
+                  </option>
+                  <option value="only_on_device">
+                    Private — on-device only
+                  </option>
+                  <option value="prefer_in_cloud">
+                    Cloud-first
+                  </option>
+                </select>
+              </label>
+            </div>
+
+            <div class="device-prep">
+              <button id="prepare-btn" class="btn btn-ghost" type="button">
+                Prepare on-device model
+              </button>
+              <progress
+                id="prepare-progress"
+                max="1"
+                value="0"
+                hidden
+              ></progress>
+              <span id="prepare-state" class="muted"></span>
+            </div>
+
+            <p id="reflect-status" class="status-line" role="status"></p>
+
+            <article id="reflection-card" class="result" hidden>
+              <div class="result-head">
+                <h3>Reflection</h3>
+                <span id="reflection-source" class="badge"></span>
+                <span id="reflection-latency" class="muted"></span>
+              </div>
+              <p id="reflection-summary"></p>
+              <div id="reflection-moods" class="chips"></div>
+              <p id="reflection-question" class="question"></p>
+              <p id="reflection-note" class="muted small"></p>
+            </article>
+          </section>
+
+          <section class="card">
+            <div class="card-head">
+              <h2>Weekly insight</h2>
+              <span id="week-count" class="muted"></span>
+            </div>
+            <p>
+              A longer look across your week — recurring themes, mood shifts,
+              one kind suggestion. This is the heavy task, so it runs in the
+              cloud with Gemini Flash.
+            </p>
+            <label class="consent">
+              <input id="cloud-consent" type="checkbox" />
+              I understand this sends my entries from the last 7 days to
+              Google&rsquo;s cloud (Gemini) for analysis.
+            </label>
+            <div class="row">
+              <button id="insight-btn" class="btn btn-primary" type="button">
+                Generate weekly insight
+              </button>
+            </div>
+            <p id="insight-status" class="status-line" role="status"></p>
+            <article id="insight-card" class="result" hidden>
+              <div class="result-head">
+                <h3>This week, in hindsight</h3>
+                <span id="insight-source" class="badge"></span>
+                <span id="insight-latency" class="muted"></span>
+              </div>
+              <p id="insight-text"></p>
+            </article>
+          </section>
+
+          <section class="card explainer">
+            <h2>How the hybrid works</h2>
+            <dl>
+              <div>
+                <dt>On-device — Gemini Nano 4</dt>
+                <dd>
+                  In desktop Chrome (139+), quick reflections run entirely in
+                  your browser via the Chrome Prompt API. Private, free, and
+                  it works offline. Your words never leave the device.
+                </dd>
+              </div>
+              <div>
+                <dt>Cloud — Gemini Flash</dt>
+                <dd>
+                  When Nano isn&rsquo;t available, Firebase AI Logic falls back
+                  to Gemini in the cloud, and the weekly insight always starts
+                  there — long context is a cloud job.
+                </dd>
+              </div>
+              <div>
+                <dt>You can see the route</dt>
+                <dd>
+                  Every answer carries a badge showing whether it ran
+                  <em>on-device</em> or <em>in the cloud</em>, straight from
+                  the SDK&rsquo;s <code>inferenceSource</code>. No guessing.
+                </dd>
+              </div>
+            </dl>
+            <p class="muted small">
+              Built with Firebase AI Logic (hybrid inference), Firestore,
+              Anonymous Auth and App Check. Entries are stored per anonymous
+              user and protected by Firestore security rules.
+            </p>
+          </section>
+        </div>
+
+        <aside class="col-side">
+          <section class="card">
+            <div class="card-head">
+              <h2>History</h2>
+              <span id="history-count" class="muted"></span>
+            </div>
+            <p id="history-empty" class="muted">
+              No entries yet. Your saved entries and their reflections will
+              appear here.
+            </p>
+            <ol id="history-list" class="history"></ol>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <footer class="site-footer">
+      <p>
+        Daymark — built for the Firebase #BuildHybridAI 2026 Hackathon.
+        Open source (Apache-2.0).
+        <a href="https://github.com/Tiannuryadins/daymark-hybrid-journal">GitHub</a>
+      </p>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
